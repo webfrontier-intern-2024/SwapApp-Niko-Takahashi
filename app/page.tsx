@@ -1,101 +1,105 @@
+"use client"; // このプログラムは、ブラウザ側で動作する
+
+import { useState } from 'react';
 import Image from "next/image";
+import Link from 'next/link';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [imageSrc, setImageSrc] = useState<string | null>(null); // 画像のURLを保持するステート
+  const [isImageSent, setIsImageSent] = useState<boolean>(false); // 画像送信状態を管理するステート
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault(); // 画像ファイルをドロップするとファイルが開かれるかもしれませんが、それを防ぎます。
+    const file = event.dataTransfer.files[0]; // ドロップされたファイルを取得
+
+    if (file) {
+      const reader = new FileReader(); // 画像ファイルの内容を読み取るための道具
+      reader.onloadend = () => {
+        setImageSrc(reader.result as string); 
+        setIsImageSent(false); // 新しい画像が選ばれたら、状態をリセット
+      };
+      reader.readAsDataURL(file); // 画像をデータURLとして読み込む
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault(); // デフォルトの動作を防ぐ
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); // フォームのデフォルト送信を防ぐ
+    console.log("Image sent:", imageSrc);
+    setIsImageSent(true); // 画像送信状態を更新
+    // ここで画像をサーバーに送信する処理を実装
+  };
+
+  const handleDeleteImage = () => {
+    setImageSrc(null); // 画像を削除する処理
+    setIsImageSent(false); // 画像を削除したら状態をリセット
+  };
+
+  return (
+    <div className="flex justify-center items-center min-h-screen"> {/* 全体を中央に配置 */}
+      <main className="flex flex-col gap-8 items-center"> {/* 子要素を中央に配置 */}
+        <div>
+          <p className="text-lg font-bold">顔をマスクする</p> {/* タイトルを強調 */}
+          <div
+            className="border border-gray-400 rounded-lg p-12"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            style={{
+              textAlign: "center",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              width: "fit-content",
+              margin: "0 auto", // 中央揃え
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {/* ドロップされた画像を表示する部分 */}
+            {imageSrc && (
+              <div className="mt-4">
+                <Image
+                  src={imageSrc}
+                  alt="Dropped Image"
+                  width={300} // 幅
+                  height={300} // 高さ
+                  className="rounded"
+                />
+              </div>
+            )}
+            <p>ここに画像をドラッグ・アンド・ドロップしてください。</p>
+          </div>
         </div>
+        <form onSubmit={handleSubmit} className="flex gap-4 items-center flex-col sm:flex-row">
+          <button
+            type="button"
+            onClick={handleDeleteImage}
+            className="rounded-full border border-solid border-blue-500 dark:border-blue-400 transition-colors flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800 hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+          >
+            画像を削除
+          </button>
+          {isImageSent ? ( // 送信状態によってボタンを切り替える
+            <Link href="/Page2">
+              <button
+                type="button" // ボタンのタイプを変更
+                className="rounded-full border border-solid border-blue-500 dark:border-blue-400 transition-colors flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800 hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+              >
+                画像をマスク
+              </button>
+            </Link>
+          ) : (
+            <button
+              type="submit" // 送信ボタン
+              className="rounded-full border border-solid border-blue-500 dark:border-blue-400 transition-colors flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800 hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+            >
+              画像を送信
+            </button>
+          )}
+        </form>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
